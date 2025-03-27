@@ -1,69 +1,41 @@
-from tkinter import Tk, Label, Entry, Button, StringVar, messagebox
-import json
-import os
-from auth_sha256 import hash_password, authenticate_user
+import tkinter as tk
+from tkinter import messagebox
+from auth_sha256 import register_user
 
-class AuthApp:
-    def __init__(self, master):
-        self.master = master
-        master.title("Authentication App")
+def registra_utente_gui():
+    """Funzione per registrare un utente tramite GUI."""
+    username = entry_username.get()
+    password = entry_password.get()
 
-        self.username_label = Label(master, text="Username:")
-        self.username_label.pack()
+    if not username or not password:
+        messagebox.showerror("Errore", "Nome utente e password sono obbligatori!")
+        return
 
-        self.username = StringVar()
-        self.username_entry = Entry(master, textvariable=self.username)
-        self.username_entry.pack()
+    risultato = register_user(username, password)
+    if risultato == "Utente già esistente":
+        messagebox.showwarning("Attenzione", "Utente già esistente!")
+    else:
+        messagebox.showinfo("Successo", "Registrazione completata!")
 
-        self.password_label = Label(master, text="Password:")
-        self.password_label.pack()
+# Creazione della finestra principale
+root = tk.Tk()
+root.title("Registrazione Utente")
 
-        self.password = StringVar()
-        self.password_entry = Entry(master, textvariable=self.password, show='*')
-        self.password_entry.pack()
+# Creazione dei widget
+label_username = tk.Label(root, text="Nome utente:")
+label_username.pack()
 
-        self.register_button = Button(master, text="Register", command=self.register_user)
-        self.register_button.pack()
+entry_username = tk.Entry(root)
+entry_username.pack()
 
-        self.login_button = Button(master, text="Login", command=self.login_user)
-        self.login_button.pack()
+label_password = tk.Label(root, text="Password:")
+label_password.pack()
 
-    def register_user(self):
-        username = self.username.get()
-        password = self.password.get()
-        hashed_password = hash_password(password)
+entry_password = tk.Entry(root, show="*")
+entry_password.pack()
 
-        if os.path.exists("data.json"):
-            with open("data.json", "r") as file:
-                users = json.load(file)
-        else:
-            users = []
+button_register = tk.Button(root, text="Registra", command=registra_utente_gui)
+button_register.pack()
 
-        users.append({"username": username, "password": hashed_password})
-
-        with open("data.json", "w") as file:
-            json.dump(users, file, indent=4)
-
-        messagebox.showinfo("Success", f"User {username} registered successfully!")
-
-    def login_user(self):
-        username = self.username.get()
-        password = self.password.get()
-        hashed_password = hash_password(password)
-
-        if os.path.exists("data.json"):
-            with open("data.json", "r") as file:
-                users = json.load(file)
-
-            for user in users:
-                if user.get('username') == username and user.get('password') == hashed_password:
-                    messagebox.showinfo("Welcome", f"Welcome {username}")
-                    return
-            messagebox.showerror("Error", "Incorrect username or password!")
-        else:
-            messagebox.showerror("Error", "No registered users.")
-
-if __name__ == "__main__":
-    root = Tk()
-    app = AuthApp(root)
-    root.mainloop()
+# Avvio del loop principale della GUI
+root.mainloop()

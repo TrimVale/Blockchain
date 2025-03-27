@@ -14,23 +14,38 @@ def register_user(username, password):
     # Load existing users or initialize an empty list
     if os.path.exists("data.json"):
         with open("data.json", "r") as file:
-            users = json.load(file)
+            try:
+                users = json.load(file)
+                # Verifica che ogni elemento sia un dizionario valido
+                if not isinstance(users, list) or not all(
+                    isinstance(u, dict) and "username" in u and "password" in u for u in users
+                ):
+                    raise ValueError("Dati non validi in data.json")
+            except (json.JSONDecodeError, ValueError):
+                users = []  # Se i dati sono corrotti, inizializza una lista vuota
     else:
         users = []
 
+    print("Users caricati:", users)
+
+    # Check if the username already exists
+    for existing_user in users:
+        if existing_user["username"] == username:
+            return "Utente già esistente"
+
     # Add the new user
     users.append(user)
+
+    print("Nuovo utente:", user)
 
     # Save the updated users list
     with open("data.json", "w") as file:
         json.dump(users, file, indent=4)
 
-    print(f"Utente {username} registrato con successo!")
+    return "Registrazione completata"
 
-def authenticate_user():
+def authenticate_user(username, password):
     """Authenticate a user by username and password."""
-    username = input("Inserisci il tuo username: ")
-    password = input("Inserisci la tua password: ")
     hashed_password = hash_password(password)
 
     if os.path.exists("data.json"):
@@ -39,10 +54,7 @@ def authenticate_user():
         
         for user in users: 
             if user.get('username') == username and user.get('password') == hashed_password:
-                print(f"Benvenuto {username}")
                 return True
-        print("Nome utente o password errati!")
+        return False
     else:
-        print("Nessun utente registrato.")
-    
-    return False
+        return False
